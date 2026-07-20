@@ -1,0 +1,40 @@
+name: Build downloadable app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate market snapshot
+        run: npm run scan
+      - name: Build portable PWA
+        run: npm run build -w web
+        env:
+          VITE_BASE_PATH: ./
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      - name: Add package instructions
+        run: cp docs/app-package-readme.txt web/dist/START-HERE.txt
+      - name: Upload downloadable app
+        uses: actions/upload-artifact@v6
+        with:
+          name: nocturne-web-app
+          path: web/dist
+          retention-days: 90
+          if-no-files-found: error

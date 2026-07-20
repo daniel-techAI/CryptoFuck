@@ -1,0 +1,14 @@
+services:
+  nocturne:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      PORT: 8787
+      LIVE_TRADING_ENABLED: "false"
+    volumes:
+      - nocturne-data:/app/server/data
+    restart: unless-stopped
+
+volumes:
+  nocturne-data:

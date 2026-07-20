@@ -1,0 +1,27 @@
+{
+  "name": "nocturne-crypto-system",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,green \"npm run dev -w server\" \"npm run dev -w web\"",
+    "build": "npm run build -w server && npm run build -w web",
+    "test": "npm run test -w server && npm run test -w web",
+    "scan": "npm run snapshot -w server",
+    "check": "npm run test && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "allowScripts": {
+    "bufferutil@4.1.0": true,
+    "ccxt@4.5.67": true,
+    "esbuild@0.28.1": true
+  }
+}
