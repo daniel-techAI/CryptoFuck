@@ -2,50 +2,56 @@
 
 ```mermaid
 flowchart LR
-  Kraken[Kraken public OHLC] --> Scanner[Closed-candle scanner]
-  Scanner --> Ensemble[Explainable factor ensemble]
-  Ensemble --> API[Express API]
-  Ensemble --> Snapshot[Static market snapshot]
-  API --> Dashboard[React dashboard]
-  Snapshot --> Dashboard
-  Dashboard --> PWA[Installable offline shell]
-  Dashboard --> Auth[Supabase Google + email Auth]
-  Auth --> Profiles[Profiles + user preferences]
-  Profiles --> CloudPaper[Private cloud paper ledger]
-  CloudPaper --> DbRisk[Database RLS + risk functions]
-  Dashboard --> Paper[Persistent paper broker]
-  Paper --> Risk[Risk limits + kill switch]
-  Risk -. explicit arm only .-> CCXT[CCXT execution adapter]
-  Actions[GitHub Actions schedule] --> Scanner
-  Actions --> Pages[GitHub Pages deploy]
+  BinanceRest[Binance public REST klines] --> LiveStore[Live market hooks]
+  BinanceWs[Binance WebSocket klines + ticker + book] --> LiveStore
+  LiveStore --> Chart[Interactive candlestick chart]
+  LiveStore --> Forecast[Explainable forecast engine]
+  Forecast --> Validation[Rolling walk-forward validation]
+  Context[15m + 1h context] --> Forecast
+  Chart --> Tabs[Overview / Spot / Futures / Backtest]
+  Forecast --> Tabs
+  Tabs --> LocalPaper[Local paper ledger + risk caps]
+  Tabs --> Auth[Optional Supabase Auth]
+  Auth --> CloudPaper[Private cloud paper ledger]
+  Actions[GitHub Actions] --> Pages[Pages PWA deployment]
   Actions --> Package[Downloadable app artifact]
 ```
 
-## Signal pipeline
+## Live market boundary
 
-The scanner requests up to 720 Kraken OHLC rows and explicitly drops the final, not-yet-committed candle. It calculates EMA20/50, RSI14, ATR14, 24-hour momentum, and a 20-hour volume baseline. Those factors produce a bounded score from -100 to +100. The UI labels the derived value a probability score; it is a ranking heuristic, not a statistically calibrated chance of profit.
+The static Pages app requests up to 360 historical candles from Binance's public market-data REST endpoint. It then opens one combined stream for the selected symbol's kline, 24-hour ticker, and best bid/ask, plus one combined mini-ticker stream for the five-row market tape.
 
-Every result includes the raw indicators, five evidence statements, a regime label, entry band, ATR-derived invalidation, and three risk/reward targets. If a market request fails, that pair is replaced by deterministic offline sample data and the entire snapshot is visibly marked stale.
+Binance pushes non-1s kline updates approximately every two seconds. Incoming frames update refs without forcing React to render for every event; the visible UI flushes every three seconds. The header reports the most recent event age, reconnects with exponential backoff, and switches to an offline or reconnecting state rather than labeling old data live.
 
-## Execution boundary
+## Forecast boundary
 
-`PaperBroker` is the default and persists an append-only-style order list plus account state to an atomic JSON file. It enforces:
+The deterministic client-side model uses:
+
+- EMA 20/50 spread, price location, and EMA slope;
+- six-candle price momentum;
+- RSI 14 with exhaustion penalties;
+- ATR 14 volatility;
+- current volume relative to a 20-candle baseline.
+
+Absolute scores below 18 are neutral. Rolling validation replays historical decisions without look-ahead over a three-candle horizon. Directional accuracy is separated from net-positive outcomes after a modeled 0.24% round trip. A sample with directional accuracy below 48% cannot publish a directional call. Fifteen-minute and one-hour context can further reduce confidence when the active timeframe conflicts.
+
+This is an explainable heuristic, not a trained predictive model or calibrated probability of profit.
+
+## Paper execution boundary
+
+Spot and Futures tabs are simulations. The cost panel models taker fees and slippage, and the Futures tab estimates liquidation without pretending to reproduce every Binance maintenance tier or funding payment. Actual account fees vary.
+
+The local and cloud paper broker boundaries retain these portfolio limits:
 
 - 1% maximum equity risk per trade;
 - 3% maximum total open risk;
 - 20% maximum position notional;
-- 3% maximum daily drawdown;
 - an immediate kill switch.
 
-`LiveBroker` is a separate, lazily loaded CCXT boundary. It requires `LIVE_TRADING_ENABLED=true`, exchange credentials, `LIVE_ACCOUNT_EQUITY_USD`, an arm-token header, and a verbatim per-order acknowledgement. It rejects risk above 1% of configured equity and rejects markets where CCXT does not advertise an attached stop-loss feature. Unless `LIVE_PRODUCTION_ACK=YES_I_ACCEPT_REAL_LOSS_RISK` is also present, it requests the exchange sandbox before any other exchange call.
+The server-side `LiveBroker` remains separate and disabled by default. It requires explicit server environment gates, an arm token, per-order acknowledgement, configured equity, and sandbox mode unless the production-loss acknowledgement is present. Exchange secrets are prohibited from the web build.
 
-## Identity and storage boundary
+## Identity and deployment boundary
 
-Supabase is optional and lazy-loaded. Guests never contact the profile database and keep simulation data in browser storage. Signed-in users use Google OAuth or passwordless email; emails remain in `auth.users`, while the public profile table contains only ID, optional handle, display name, and avatar URL. Paper accounts, orders, and preferences use owner-scoped RLS policies. Order placement and the kill switch execute in security-definer database functions that re-check identity and risk limits atomically.
+Supabase is lazy and optional. Guests never contact the profile database. Signed-in paper accounts use owner-scoped RLS and security-definer risk functions. The browser receives only a Supabase publishable key.
 
-The browser receives only a Supabase publishable key. Service-role keys, Google client secrets, exchange secrets, and trading-arm tokens are prohibited from frontend builds and GitHub Pages variables.
-
-## Deployment modes
-
-- GitHub Pages: installable PWA with a scheduled read-only live/cached scanner. Guests use a browser-local paper ledger; authenticated users may sync private simulation data through Supabase. The workflow refreshes market data every 30 minutes and deploys without committing generated snapshots back into Git history.
-- Container/API: full scanning, server-persisted paper ledger, backtesting, and the gated execution adapter.
+GitHub Pages deploys on changes to `main`; live prices come directly from Binance and do not depend on scheduled repository rebuilds. The PWA service worker automatically replaces old code bundles after a successful deployment.

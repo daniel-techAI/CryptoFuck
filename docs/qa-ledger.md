@@ -2,57 +2,67 @@
 
 ## Evidence
 
-- Accepted concept: [`.design/nocturne-dashboard-concept.png`](../.design/nocturne-dashboard-concept.png), 1536 × 1044.
-- Latest native render: [`.design/nocturne-dashboard-render-final.png`](../.design/nocturne-dashboard-render-final.png), Browser/IAB viewport 1536 × 1044.
-- Latest paper-ticket render: [`.design/nocturne-trade-ticket-final.png`](../.design/nocturne-trade-ticket-final.png).
-- Latest mobile render: [`.design/nocturne-dashboard-mobile-final.png`](../.design/nocturne-dashboard-mobile-final.png), Browser/IAB viewport 390 × 844.
-- Latest account render: [`.design/nocturne-account-final.png`](../.design/nocturne-account-final.png), Browser/IAB viewport 1536 × 1044.
+- Accepted live-dashboard concept: [`.design/nocturne-live-dashboard-concept.png`](../.design/nocturne-live-dashboard-concept.png), 1536 x 1024.
+- Latest live implementation: [`.design/nocturne-live-dashboard-render-final.png`](../.design/nocturne-live-dashboard-render-final.png), Browser/IAB viewport 1536 x 1024.
+- Responsive check: Browser/IAB viewport 390 x 844; the document's usable client width was 375px because of browser chrome/scrollbar allocation.
 
-The accepted concept, latest native render, and latest mobile render were inspected together with `view_image` after the final code change.
+The concept and latest render were inspected together with `view_image` after the final CSS change.
 
 ## Fidelity comparison
 
-| Area | Concept evidence | Render evidence | Result |
+| Area | Concept | Final implementation | Result |
 | --- | --- | --- | --- |
-| Shell | 174px dark left rail, open command workspace, 72px header | Same rail/header proportions and first-viewport hierarchy | Matched |
-| Palette | Cool near-black navy, chartreuse primary, cyan information, coral risk | Same semantic palette with no purple gradient, cream shift, or glass cards | Matched |
-| Typography | Editorial serif price/title plus compact technical mono chrome | Instrument Serif and IBM Plex Mono, including explicit control typography | Matched |
-| Layout | Chart + thesis, scanner table, full-width risk rail | Same container model and order; no card-grid substitution | Matched |
-| Chart treatment | Thin luminous trace, volume rail, entry/target/stop zones | Code-native SVG trace, grid, volume, labeled risk/target zones, optional scan sweep | Matched |
-| Signal thesis | Large directional score, regime/confidence, levels, evidence | Same hierarchy with live dynamic values and a methodology note | Matched |
-| Trade ticket | Right-side paper configuration overlay | Accessible modal in the same position with direction, sizing, stop, target, risk, and simulation warning | Matched |
-| Profile/install extension | Not present in the original concept; required by the public-app request | Compact bordered header controls plus a 470px account dialog / mobile bottom sheet in the existing component language | Intentional extension |
-| Responsive | Compact continuation implied | 390 × 844 has a compact nav, stacked analysis, install/profile actions, internally contained table scrolling, and a 375px document width | Verified |
+| Navigation | NOCTURNE plus Overview, Spot, Futures, Backtest, Account | Same labels, order, selected underline, market selector, live status, install and account controls | Matched |
+| Chart | Dominant candlestick surface with volume and EMA overlays | Real Lightweight Charts canvas using live Binance candles, volume, EMA 20/50, crosshair and trigger lines | Matched |
+| Forecast rail | Direction, probability split, evidence and price levels | Same hierarchy plus validation and 15m/1h context; live weak evidence correctly renders neutral | Matched with authorized reliability extension |
+| Market tape | Open full-width table below the chart | Five live Binance pairs, price, 24h move, quote volume and momentum | Matched |
+| Visual system | Near-black navy, lime/coral/cyan semantics, squared rails, compact mono type | Same palette, border rhythm, density, Instrument Serif brand and IBM Plex Mono UI | Matched |
+| Responsive | Desktop command center with stackable right rail | At 390 x 844, the chart remains 375px wide, the forecast stacks, tabs scroll internally, and root width remains 375px | Verified |
 
 ## Above-the-fold copy diff
 
-The structural strings from the design spec are present and in the same hierarchy: `NOCTURNE`, `Market command`, `Paper mode`, `All trades are simulated`, `Last scan`, `Run scan`, navigation labels, `Signal thesis`, `Market scanner`, and all five risk-rail labels. The requested `Install` and `Sign in` secondary actions are the only new above-the-fold structural copy. The timestamp is explicitly UTC. Prices, directions, regimes, evidence, scores, and portfolio values intentionally differ because they are live or persisted product data.
+The requested structural strings are present: `NOCTURNE`, `Overview`, `Spot`, `Futures`, `Backtest`, `Account`, `BINANCE LIVE`, `Install app`, all five timeframe labels, `Market forecast`, and `Live market tape`. Dynamic prices, probabilities, evidence, and direction intentionally differ from the concept because they come from the current Binance market and validation gate.
 
-Intentional functional deviations:
+Intentional extensions authorized by the reliability request and second improvement pass:
 
-- Only the working `1h` interval is shown; inert timeframe and indicator controls from the concept were not shipped.
-- The ticket is closed by default and appears after `Configure`; the separate ticket screenshot verifies that state.
-- The concept and this final snapshot both happen to be LONG; earlier QA also exercised SHORT/WAIT data and confirmed direction-specific color semantics.
-- The public release adds compact install/account actions. They remain secondary to `Run scan` and collapse to icons below 1180px.
+- directional accuracy and net-positive-after-costs are shown separately;
+- weak validation forces a neutral call;
+- 15m/1h context reduces confidence when timeframes conflict;
+- neutral forecasts use observation and trigger labels rather than trade-entry language.
 
 ## Mismatches found and fixed
 
-- Replaced the initial sidebar activity glyph with the concept's crosshair metaphor.
-- Added the concept's header settings action and wired it to Automation.
-- Changed last-scan formatting from local time to explicit UTC.
-- Removed floating-point noise from stop/target inputs.
-- Reduced font assets to Latin subsets.
-- Added a real expand/close interaction to the chart control.
-- Prevented mobile page overflow; wide market data remains inside its own scroll region.
-- Added explicit layout/paint containment to the mobile scanner after the 390px audit found the table contributing to root scroll width.
-- Kept Supabase in a lazy-loaded chunk so guests do not download the auth SDK unless cloud profiles are configured.
+- Replaced the generated snapshot-first experience with direct Binance REST history and reconnecting WebSockets.
+- Prevented WebSocket frequency from causing unnecessary React renders by batching visible updates every three seconds.
+- Split the one-page dashboard into dedicated workspace tabs.
+- Removed the desktop tab rail's unnecessary overflow scrollbar while preserving mobile horizontal navigation.
+- Separated directional accuracy from cost-positive outcomes after the first live sample exposed the ambiguity.
+- Added a validation rejection gate and higher-timeframe context instead of overstating confidence.
+- Changed neutral price levels from `Entry / Stop / Target` language to `Observation / Downside trigger / Upside trigger`.
+- Removed the final focused-control outline before visual capture.
 
-No fixable material visual mismatches remain.
+No fixable material visual mismatches remain. The live market state is an intentional data-driven deviation from the bullish mock concept.
 
 ## Core interaction verification
 
-Browser/IAB exercised: live scan, market selection, expanded chart open/close, paper-ticket open/close, position-size edit, paper-order submission, portfolio open-risk update, kill-switch lock/release, strategy navigation, Automation navigation, auto-scan toggle, account open/close on desktop and mobile, and a profile alert-threshold change. The Browser/IAB DOM snapshot method was unavailable in this environment, so its documented locator/evaluate APIs were used within the same Browser surface; standalone Playwright was not used. The actual install prompt was not accepted because QA should not install software on the user's device; manifest discovery, install-action visibility, PWA generation, and service-worker precache output were verified instead.
+The Browser/IAB flow exercised:
 
-Google and magic-link provider round trips require the repository owner’s Supabase and Google OAuth configuration. The unconfigured state, form code, redirect construction, privacy/terms surfaces, RLS migration, and account-deletion function were verified locally; real provider sign-in remains a deployment credential check.
+- initial Binance REST history and WebSocket connection;
+- live status and event age (`Updated 0-2s ago`);
+- real chart canvas rendering;
+- timeframe switch from 15m to 1m with a refreshed forecast horizon;
+- Futures tab navigation and realistic fee/slippage/liquidation calculations;
+- one simulated Futures order, followed by a success notice and ledger row;
+- Backtest navigation with current rolling metrics;
+- desktop 1536 x 1024 and mobile 390 x 844 layout checks;
+- root overflow, framework overlay, and local console checks.
 
-API and UI tests (11 total), TypeScript builds, production PWA build, live snapshot generation, and dependency audit all passed.
+The Browser/IAB DOM snapshot endpoint was incompatible in this runtime, so the same Browser surface's documented read-only evaluate, locator, screenshot, console, and viewport APIs were used. Standalone Playwright was not used. The only console noise came from the host browser's own Statsig request; there were no `127.0.0.1` app errors or warnings.
+
+## Automated checks
+
+- Server tests: 7 passed.
+- Web tests: 9 passed, including forecast direction, minimum history, EMA stability, and context-conflict confidence reduction.
+- TypeScript and production PWA builds: passed.
+- PWA precache: 25 entries, about 941 KiB.
+- Dependency audit: 0 vulnerabilities at moderate or higher severity.

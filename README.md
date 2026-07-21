@@ -1,42 +1,36 @@
 # NOCTURNE
 
-An explainable crypto market scanner, backtester, paper-trading ledger, and safety-gated execution foundation. The dashboard is live-data capable and paper-first by design.
+A live Binance crypto market terminal with candlestick charts, transparent forecasts, cost-aware walk-forward validation, and risk-limited paper trading.
 
-[Launch the free web app](https://daniel-techai.github.io/CryptoFuck/) · [Download the latest Actions app package](https://github.com/daniel-techAI/CryptoFuck/actions/workflows/app-package.yml) · [Set up Google/email profiles](docs/auth-and-deployment.md)
+[Launch the free live web app](https://daniel-techai.github.io/CryptoFuck/) - [Download the latest app package](https://github.com/daniel-techAI/CryptoFuck/actions/workflows/app-package.yml) - [Set up Google/email profiles](docs/auth-and-deployment.md)
 
-> This software is for research and simulation. Its probability values are heuristic ranking scores, not calibrated guarantees, and it is not financial advice. Crypto assets can lose substantial value.
+> Research and simulation only. Forecasts are probabilistic rule-based estimates, not guarantees or financial advice. Crypto can lose substantial value.
 
-![NOCTURNE dashboard concept](.design/nocturne-dashboard-concept.png)
+![NOCTURNE live dashboard concept](.design/nocturne-live-dashboard-concept.png)
 
-## What is included
+## Live web experience
 
-- Kraken public 1-hour OHLC scanner for BTC, ETH, SOL, LINK, and AVAX;
-- closed-candle EMA20/50, RSI14, ATR14, momentum, and volume scoring;
-- an evidence trail, regime, confidence, entry band, invalidation, and targets for every signal;
-- factor contributions and 6h/12h signal memory so conviction changes are visible;
-- walk-forward-style, fee-aware backtesting endpoint;
-- persistent paper ledger with position sizing, open-risk caps, daily drawdown lock, and kill switch;
-- a separately gated CCXT adapter for exchange sandbox/production execution;
-- a responsive React/Vite command dashboard;
-- an in-app strategy reality check, paper ledger, and local five-minute auto-scan control;
-- an installable, offline-capable PWA with automatic browser-managed updates;
-- optional Google/Gmail and passwordless email profiles through Supabase Auth;
-- private cross-device paper accounts and preferences protected by row-level security;
-- configurable high-conviction browser alerts for LONG/SHORT signals;
-- CI, Dependabot, and a twice-hourly GitHub Pages data refresh/deployment workflow;
-- a downloadable production app artifact built on every push to `main`;
-- Docker deployment for the full API-backed mode.
+- Binance Spot REST history plus reconnecting WebSocket market streams;
+- a three-second UI refresh cadence with a visible event-age and connection indicator;
+- selectable `1m`, `3m`, `15m`, `30m`, and `1h` candles;
+- a real interactive candlestick chart with volume, EMA 20, EMA 50, targets, and invalidation;
+- BTC/USDT, ETH/USDT, SOL/USDT, BNB/USDT, and XRP/USDT live market tape;
+- explicit bullish, bearish, or neutral forecasts with probability distribution and indicator evidence;
+- a hard neutral gate when walk-forward directional accuracy is weak;
+- 15-minute and 1-hour context confirmation that lowers confidence on conflicts;
+- separate Overview, Spot, Futures, Backtest, and Account workspaces;
+- paper Spot and Futures order forms with estimated fees, slippage, risk, and liquidation;
+- persistent browser-local paper positions, portfolio caps, and a kill switch;
+- installable PWA behavior with automatic code updates;
+- optional Google and email profiles through Supabase Auth.
 
-## Why this architecture
+Binance documents the public [Kline WebSocket stream](https://developers.binance.com/docs/binance-spot-api-docs/web-socket-streams) and [historical kline endpoint](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints). No API key is needed for these public feeds.
 
-The strongest existing systems split data, strategy, backtesting, execution, and monitoring instead of promising a magic predictor:
+## Forecast and validation boundary
 
-- [Freqtrade](https://github.com/freqtrade/freqtrade) provides dry-run trading, backtests, optimization, and adaptive FreqAI models.
-- [Hummingbot](https://github.com/hummingbot/hummingbot) demonstrates standardized real-time exchange connectors and strategy execution.
-- [CCXT](https://github.com/ccxt/ccxt) provides a unified API across more than 100 exchanges and sandbox switching where supported.
-- [VectorBT](https://vectorbt.dev/) demonstrates fast research and parameter exploration.
+NOCTURNE combines EMA structure, EMA slope, six-candle momentum, RSI 14, ATR 14, and volume confirmation into a bounded score. A forecast includes its horizon, evidence, entry zone, invalidation, targets, and a probability distribution.
 
-NOCTURNE borrows their separation of concerns while keeping this first release small enough to audit. The near-term edge is not “predict perfectly”; it is consistent data handling, transparent ranking, realistic testing, and enforced risk.
+The Backtest tab performs a rolling walk-forward check: every historical decision sees only data available at that candle, then evaluates the following three candles. Directional accuracy and net-positive outcomes after a modeled 0.24% round trip are shown separately. This is a reality check, not proof of future edge.
 
 ## Quick start
 
@@ -44,70 +38,50 @@ Requires Node 22 or newer.
 
 ```bash
 npm install
-npm run scan
+npm run dev -w web
+```
+
+Open `http://127.0.0.1:5173`. The static web mode gets public market data directly from Binance and keeps paper activity in local browser storage.
+
+To run the optional Express API and web app together:
+
+```bash
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. The API runs on `http://127.0.0.1:8787`.
-
-Profiles are optional. To enable them locally:
+Validation:
 
 ```bash
-cp web/.env.example web/.env.local
+npm run check
+npm audit --audit-level=moderate
 ```
 
-Add the Supabase project URL and publishable key, then follow [profiles and deployment](docs/auth-and-deployment.md). Guests can use the full scanner and a private local paper ledger without an account.
+## Profiles
 
-```bash
-npm test
-npm run build
-```
+Profiles are optional. Guests can use live charts, forecasts, backtests, and local paper trading without an account. To enable Google OAuth and email magic links, copy `web/.env.example` to `web/.env.local`, add a Supabase project URL and publishable key, apply the migration under `supabase/migrations`, and follow [profiles and deployment](docs/auth-and-deployment.md).
 
-Container mode:
+Google sign-in requests basic identity scopes only; it does not read Gmail messages. Cloud paper rows are owner-only through Postgres row-level security.
 
-```bash
-docker compose up --build
-```
+## Automated deployment and downloads
 
-Then open `http://127.0.0.1:8787`.
+`.github/workflows/pages.yml` builds and deploys the live PWA whenever `main` changes. `.github/workflows/app-package.yml` produces a downloadable production artifact on every push to `main` and on manual dispatch. Installed copies use the service worker's automatic update path.
 
-## API
+Market prices do not wait for GitHub Actions: each open app connects directly to the Binance public WebSocket and applies live events to the chart every three seconds.
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `GET` | `/api/health` | Mode and service health |
-| `POST` | `/api/scan` | Scan configured markets |
-| `POST` | `/api/backtest` | Backtest one supported pair |
-| `GET` | `/api/paper/portfolio` | Risk and paper portfolio state |
-| `GET/POST` | `/api/paper/orders` | List or place paper orders |
-| `POST` | `/api/paper/orders/:id/close` | Close a paper position |
-| `POST` | `/api/kill-switch` | Block or allow new paper orders |
-| `POST` | `/api/execution/orders` | Place a fully gated CCXT order |
+## Execution safety
 
-## Automated updates
+The public web app never sends exchange orders and never asks for exchange credentials. Paper limits include 1% maximum equity risk per trade, 3% total open risk, a 20% notional cap, and a kill switch.
 
-`.github/workflows/pages.yml` refreshes the market snapshot at minutes 17 and 47 of each hour, builds the dashboard, and deploys it with GitHub Pages Actions. The PWA service worker upgrades installed copies automatically. `.github/workflows/app-package.yml` builds a downloadable production artifact on every push to `main` and on manual dispatch.
-
-Enable **Settings → Pages → Source: GitHub Actions** once after the first push. GitHub schedules can be delayed and may be disabled after 60 inactive days; see the [operations runbook](docs/risk-and-operations.md).
-
-## Profiles and privacy
-
-Google sign-in uses only OpenID, email, and basic profile scopes; it does not access Gmail messages. Email addresses stay in Supabase Auth and are not copied to public profile rows. Signed-in paper orders, account state, and alert preferences are owner-only through Postgres RLS. Users can permanently delete their cloud identity and all linked simulation data from the profile dialog.
-
-Read the deployed [privacy policy](https://daniel-techai.github.io/CryptoFuck/privacy.html), [terms](https://daniel-techai.github.io/CryptoFuck/terms.html), and [security policy](SECURITY.md).
-
-## Live execution
-
-Read [risk and operations](docs/risk-and-operations.md) and [architecture](docs/architecture.md) first. The example environment intentionally leaves live execution disabled. Do not put exchange credentials into the frontend or GitHub Pages. Store them only in a private, monitored backend environment, and never grant withdrawal permission.
+The repository still contains a separately gated server-side CCXT adapter for private sandbox development. Never put exchange secrets into the frontend, GitHub Pages variables, or browser storage, and never grant withdrawal permission.
 
 ## Repository map
 
 ```text
-server/   market data, signals, backtest, paper broker, live adapter, API
-web/      React dashboard and static market snapshot
-docs/     design system, architecture, and operations
-.github/  CI, dependency updates, scheduled Pages deployment
-supabase/ profile, RLS, and cloud paper-account migration
+web/       live Binance client, chart, forecast, validation, tabs, PWA, profiles
+server/    optional API, Kraken scanner, paper broker, backtest, gated CCXT adapter
+supabase/  profile, RLS, and cloud paper-account migration
+docs/      architecture, authentication, risk, and operations
+.github/   CI, Pages deployment, packages, and dependency updates
 ```
 
 Released under the [MIT License](LICENSE).
