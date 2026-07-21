@@ -1,5 +1,7 @@
 export type SignalDirection = "LONG" | "SHORT" | "WAIT";
 export type RiskRating = "HIGH" | "MEDIUM" | "LOW";
+export type BinanceInterval = "1m" | "3m" | "15m" | "30m" | "1h";
+export type LiveConnectionStatus = "connecting" | "live" | "reconnecting" | "offline" | "error";
 
 export interface Candle {
   timestamp: number;
@@ -8,6 +10,65 @@ export interface Candle {
   low: number;
   close: number;
   volume: number;
+}
+
+export interface LiveTicker {
+  symbol: string;
+  price: number;
+  change24hPercent: number;
+  high24h: number;
+  low24h: number;
+  volume24h: number;
+  quoteVolume24h: number;
+  bid: number;
+  ask: number;
+  eventTime: number;
+}
+
+export interface ForecastEvidence {
+  label: string;
+  value: string;
+  score: number;
+  tone: "bullish" | "bearish" | "neutral";
+}
+
+export interface ForecastValidation {
+  sampleSize: number;
+  hitRatePercent: number;
+  profitableRatePercent: number;
+  averageNetReturnPercent: number;
+  profitFactor: number;
+  maxDrawdownPercent: number;
+  roundTripCostPercent: number;
+}
+
+export interface MarketForecast {
+  direction: "BULLISH" | "BEARISH" | "NEUTRAL";
+  horizonCandles: number;
+  score: number;
+  confidence: "HIGH" | "MEDIUM" | "LOW";
+  probabilities: { bullish: number; neutral: number; bearish: number };
+  indicators: {
+    ema20: number;
+    ema50: number;
+    rsi14: number;
+    atr14: number;
+    atrPercent: number;
+    momentum: number;
+    volumeRatio: number;
+  };
+  evidence: ForecastEvidence[];
+  levels: {
+    entryLow: number;
+    entryHigh: number;
+    invalidation: number;
+    target1: number;
+    target2: number;
+  };
+  validation: ForecastValidation;
+  context: Array<{ interval: BinanceInterval; direction: "BULLISH" | "BEARISH" | "NEUTRAL"; score: number }>;
+  contextConsensus: "ALIGNED" | "MIXED" | "CONFLICT" | "UNAVAILABLE";
+  evaluatedAt: number;
 }
 
 export interface MarketSignal {

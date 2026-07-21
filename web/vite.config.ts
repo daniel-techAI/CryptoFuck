@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: "NOCTURNE — Crypto Market Command",
         short_name: "NOCTURNE",
-        description: "Explainable crypto market signals, backtesting, and private paper trading.",
+        description: "Live Binance charts, transparent crypto forecasts, walk-forward validation, and private paper trading.",
         theme_color: "#03111b",
         background_color: "#03111b",
         display: "standalone",
