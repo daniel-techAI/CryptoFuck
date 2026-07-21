@@ -27,6 +27,19 @@ interface ChartRefs {
   lines: IPriceLine[];
 }
 
+const chartColors = {
+  background: "#08151d",
+  text: "#8d9fa4",
+  grid: "rgba(49, 73, 82, .42)",
+  border: "#203842",
+  crosshair: "#70858b",
+  crosshairLabel: "#14252d",
+  bullish: "#8fd5ac",
+  bearish: "#ed7a74",
+  cyan: "#70c5ca",
+  warning: "#d5b36a",
+} as const;
+
 function chartTime(timestamp: number): UTCTimestamp {
   return Math.floor(timestamp / 1000) as UTCTimestamp;
 }
@@ -41,7 +54,7 @@ export function LiveChart({ candles, forecast, planMode = false }: { candles: Ca
     const ema50Values = ema(closes, 50);
     return {
       candles: visible.map((candle): CandlestickData => ({ time: chartTime(candle.timestamp), open: candle.open, high: candle.high, low: candle.low, close: candle.close })),
-      volume: visible.map((candle): HistogramData => ({ time: chartTime(candle.timestamp), value: candle.volume, color: candle.close >= candle.open ? "rgba(164, 231, 54, .34)" : "rgba(255, 88, 80, .34)" })),
+      volume: visible.map((candle): HistogramData => ({ time: chartTime(candle.timestamp), value: candle.volume, color: candle.close >= candle.open ? "rgba(143, 213, 172, .34)" : "rgba(237, 122, 116, .34)" })),
       ema20: visible.map((candle, index): LineData => ({ time: chartTime(candle.timestamp), value: ema20Values[index] })),
       ema50: visible.map((candle, index): LineData => ({ time: chartTime(candle.timestamp), value: ema50Values[index] })),
     };
@@ -51,21 +64,21 @@ export function LiveChart({ candles, forecast, planMode = false }: { candles: Ca
     if (!container.current) return undefined;
     const chart = createChart(container.current, {
       autoSize: true,
-      layout: { background: { type: ColorType.Solid, color: "#030b13" }, textColor: "#81909a", fontFamily: "IBM Plex Mono", fontSize: 11 },
-      grid: { vertLines: { color: "rgba(35, 53, 66, .38)" }, horzLines: { color: "rgba(35, 53, 66, .38)" } },
-      crosshair: { mode: CrosshairMode.Normal, vertLine: { color: "#6d7d87", style: LineStyle.Dashed, labelBackgroundColor: "#1b2933" }, horzLine: { color: "#6d7d87", style: LineStyle.Dashed, labelBackgroundColor: "#1b2933" } },
-      rightPriceScale: { borderColor: "#1d303e", scaleMargins: { top: 0.08, bottom: 0.24 } },
-      timeScale: { borderColor: "#1d303e", timeVisible: true, secondsVisible: false, rightOffset: 4, barSpacing: 7, minBarSpacing: 2 },
+      layout: { background: { type: ColorType.Solid, color: chartColors.background }, textColor: chartColors.text, fontFamily: "IBM Plex Mono", fontSize: 11 },
+      grid: { vertLines: { color: chartColors.grid }, horzLines: { color: chartColors.grid } },
+      crosshair: { mode: CrosshairMode.Normal, vertLine: { color: chartColors.crosshair, style: LineStyle.Dashed, labelBackgroundColor: chartColors.crosshairLabel }, horzLine: { color: chartColors.crosshair, style: LineStyle.Dashed, labelBackgroundColor: chartColors.crosshairLabel } },
+      rightPriceScale: { borderColor: chartColors.border, scaleMargins: { top: 0.08, bottom: 0.24 } },
+      timeScale: { borderColor: chartColors.border, timeVisible: true, secondsVisible: false, rightOffset: 4, barSpacing: 7, minBarSpacing: 2 },
       localization: { locale: "en-US" },
       handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
     });
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#a4e736", downColor: "#ff5850", borderUpColor: "#a4e736", borderDownColor: "#ff5850", wickUpColor: "#a4e736", wickDownColor: "#ff5850", priceLineColor: "#a4e736",
+      upColor: chartColors.bullish, downColor: chartColors.bearish, borderUpColor: chartColors.bullish, borderDownColor: chartColors.bearish, wickUpColor: chartColors.bullish, wickDownColor: chartColors.bearish, priceLineColor: chartColors.bullish,
     });
     const volumeSeries = chart.addSeries(HistogramSeries, { priceFormat: { type: "volume" }, priceScaleId: "volume", lastValueVisible: false, priceLineVisible: false });
     chart.priceScale("volume").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
-    const ema20Series = chart.addSeries(LineSeries, { color: "#45d7e6", lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
-    const ema50Series = chart.addSeries(LineSeries, { color: "#f0b925", lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+    const ema20Series = chart.addSeries(LineSeries, { color: chartColors.cyan, lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+    const ema50Series = chart.addSeries(LineSeries, { color: chartColors.warning, lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
     chartRefs.current = { chart, candles: candleSeries, volume: volumeSeries, ema20: ema20Series, ema50: ema50Series, lines: [] };
     return () => {
       chart.remove();
@@ -91,8 +104,8 @@ export function LiveChart({ candles, forecast, planMode = false }: { candles: Ca
     if (!forecast) return;
     const neutral = forecast.direction === "NEUTRAL";
     const coreLines = [
-      refs.candles.createPriceLine({ price: forecast.levels.target1, color: "rgba(164, 231, 54, .72)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: neutral ? "UP" : "T1" }),
-      refs.candles.createPriceLine({ price: forecast.levels.invalidation, color: "rgba(255, 88, 80, .82)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: neutral ? "DOWN" : "STOP" }),
+      refs.candles.createPriceLine({ price: forecast.levels.target1, color: "rgba(143, 213, 172, .78)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: neutral ? "UP" : "T1" }),
+      refs.candles.createPriceLine({ price: forecast.levels.invalidation, color: "rgba(237, 122, 116, .84)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: neutral ? "DOWN" : "STOP" }),
     ];
     if (!planMode) {
       refs.lines = coreLines;
@@ -102,9 +115,9 @@ export function LiveChart({ candles, forecast, planMode = false }: { candles: Ca
     const entry = (forecast.levels.entryLow + forecast.levels.entryHigh) / 2;
     refs.lines = [
       ...coreLines,
-      refs.candles.createPriceLine({ price: entry, color: "rgba(69, 215, 230, .88)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: "ENTRY" }),
-      refs.candles.createPriceLine({ price: forecast.levels.target2, color: "rgba(164, 231, 54, .82)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: "T2" }),
-      refs.candles.createPriceLine({ price: forecast.levels.target2 + side * forecast.indicators.atr14, color: "rgba(240, 185, 37, .76)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: "STRETCH" }),
+      refs.candles.createPriceLine({ price: entry, color: "rgba(112, 197, 202, .88)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: "ENTRY" }),
+      refs.candles.createPriceLine({ price: forecast.levels.target2, color: "rgba(143, 213, 172, .84)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: "T2" }),
+      refs.candles.createPriceLine({ price: forecast.levels.target2 + side * forecast.indicators.atr14, color: "rgba(213, 179, 106, .8)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: "STRETCH" }),
     ];
   }, [forecast, planMode]);
 
