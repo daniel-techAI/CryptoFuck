@@ -22,7 +22,8 @@ The Decision workspace contains a single action, conditional five-step plan, cha
 - Decision
 - Backtest
 - Account
-- BTC / USDT
+- BTC / EUR
+- Coin selector and EUR / USDT / USDC quote selector
 - BINANCE LIVE
 - Install app
 - Order book
@@ -62,6 +63,7 @@ At desktop width, order book, chart, trades and ticket share one command-center 
 ## Core interactions
 
 - switch between Markets, Spot, Futures, Decision, Backtest and Account;
+- switch the base coin and quote currency; EUR is the Spot default while Futures exposes USDT and USDC only;
 - switch venue-matched candle intervals (`1m`, `3m`, `15m`, `30m`, `1h`);
 - select paper long/short, market/limit, allocation, leverage, stop and target;
 - submit a risk-checked local paper order;

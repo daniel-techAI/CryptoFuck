@@ -4,10 +4,14 @@ import type { FuturesMarketContext } from "../types";
 
 const EMPTY: FuturesMarketContext = { markPrice: 0, indexPrice: 0, fundingRate: 0, nextFundingTime: 0, lastUpdate: 0, error: "" };
 
-export function useFuturesMarketContext(symbol: BinanceSymbol): FuturesMarketContext {
+export function useFuturesMarketContext(symbol: BinanceSymbol, enabled = true): FuturesMarketContext {
   const [context, setContext] = useState<FuturesMarketContext>(EMPTY);
 
   useEffect(() => {
+    if (!enabled) {
+      setContext(EMPTY);
+      return undefined;
+    }
     let active = true;
     let timer = 0;
     const load = async () => {
@@ -36,7 +40,7 @@ export function useFuturesMarketContext(symbol: BinanceSymbol): FuturesMarketCon
       active = false;
       window.clearTimeout(timer);
     };
-  }, [symbol]);
+  }, [enabled, symbol]);
 
   return context;
 }

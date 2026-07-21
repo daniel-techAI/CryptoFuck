@@ -1,6 +1,22 @@
+import type { BinanceQuoteAsset } from "./binance";
+
 export function formatPrice(value: number): string {
   const maximumFractionDigits = value >= 1000 ? 2 : value >= 1 ? 2 : 6;
   return value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits });
+}
+
+export function formatQuoteCurrency(value: number, quote: BinanceQuoteAsset): string {
+  if (quote === "EUR") {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: value >= 1000 ? 0 : 2,
+    }).format(value);
+  }
+  return `${new Intl.NumberFormat("en-US", {
+    notation: value >= 1_000_000 ? "compact" : "standard",
+    maximumFractionDigits: value >= 1000 ? 0 : 2,
+  }).format(value)} ${quote}`;
 }
 
 export function formatCompactUsd(value: number): string {

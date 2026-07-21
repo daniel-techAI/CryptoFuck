@@ -1,18 +1,33 @@
 import type { BinanceInterval, Candle, LiveTicker } from "../types";
 
-export const BINANCE_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"] as const;
-export type BinanceSymbol = (typeof BINANCE_SYMBOLS)[number];
+export const BINANCE_BASE_ASSETS = ["BTC", "ETH", "SOL", "BNB", "XRP"] as const;
+export const BINANCE_QUOTE_ASSETS = ["EUR", "USDT", "USDC"] as const;
+export const BINANCE_FUTURES_QUOTES = ["USDT", "USDC"] as const;
+export type BinanceBaseAsset = (typeof BINANCE_BASE_ASSETS)[number];
+export type BinanceQuoteAsset = (typeof BINANCE_QUOTE_ASSETS)[number];
+export type BinanceFuturesQuoteAsset = (typeof BINANCE_FUTURES_QUOTES)[number];
+export type BinanceSymbol = `${BinanceBaseAsset}${BinanceQuoteAsset}`;
 export type MarketVenue = "spot" | "futures";
 
 export const BINANCE_INTERVALS: BinanceInterval[] = ["1m", "3m", "15m", "30m", "1h"];
 
-export const SYMBOL_LABELS: Record<BinanceSymbol, string> = {
-  BTCUSDT: "BTC / USDT",
-  ETHUSDT: "ETH / USDT",
-  SOLUSDT: "SOL / USDT",
-  BNBUSDT: "BNB / USDT",
-  XRPUSDT: "XRP / USDT",
-};
+export function createBinanceSymbol(base: BinanceBaseAsset, quote: BinanceQuoteAsset): BinanceSymbol {
+  return `${base}${quote}` as BinanceSymbol;
+}
+
+export function symbolsForQuote(quote: BinanceQuoteAsset): BinanceSymbol[] {
+  return BINANCE_BASE_ASSETS.map((base) => createBinanceSymbol(base, quote));
+}
+
+export function quoteAssetFromSymbol(symbol: string): BinanceQuoteAsset {
+  return BINANCE_QUOTE_ASSETS.find((quote) => symbol.endsWith(quote)) ?? "USDT";
+}
+
+export function baseAssetFromSymbol(symbol: string): BinanceBaseAsset {
+  const quote = quoteAssetFromSymbol(symbol);
+  const base = symbol.slice(0, -quote.length);
+  return BINANCE_BASE_ASSETS.includes(base as BinanceBaseAsset) ? base as BinanceBaseAsset : "BTC";
+}
 
 const REST_BASES = [
   "https://data-api.binance.vision",
@@ -96,8 +111,8 @@ export function liveStreamUrl(symbol: BinanceSymbol, interval: BinanceInterval, 
   return `${host}?streams=${pair}@kline_${interval}/${pair}@ticker/${pair}@bookTicker`;
 }
 
-export function tapeStreamUrl(): string {
-  const streams = BINANCE_SYMBOLS.map((symbol) => `${symbol.toLowerCase()}@miniTicker`).join("/");
+export function tapeStreamUrl(quote: BinanceQuoteAsset): string {
+  const streams = symbolsForQuote(quote).map((symbol) => `${symbol.toLowerCase()}@miniTicker`).join("/");
   return `wss://stream.binance.com:443/stream?streams=${streams}`;
 }
 
@@ -115,5 +130,6 @@ export function emptyTicker(symbol: BinanceSymbol): LiveTicker {
 }
 
 export function displaySymbol(symbol: string): string {
-  return SYMBOL_LABELS[symbol as BinanceSymbol] ?? symbol.replace("USDT", " / USDT");
+  const quote = quoteAssetFromSymbol(symbol);
+  return `${symbol.slice(0, -quote.length)} / ${quote}`;
 }

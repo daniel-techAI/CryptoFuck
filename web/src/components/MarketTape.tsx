@@ -1,6 +1,6 @@
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
-import { displaySymbol, type BinanceSymbol } from "../lib/binance";
-import { formatPercent, formatPrice } from "../lib/format";
+import { displaySymbol, quoteAssetFromSymbol, type BinanceSymbol } from "../lib/binance";
+import { formatPercent, formatPrice, formatQuoteCurrency } from "../lib/format";
 import type { LiveTicker, MarketForecast } from "../types";
 
 function momentum(change: number) {
@@ -16,11 +16,12 @@ export function MarketTape({ tickers, selected, onSelect, forecast }: { tickers:
       <div className="tape-table" role="table">
         <div className="tape-row tape-head" role="row"><span>Market</span><span>Price</span><span>24h</span><span>24h volume</span><span>Momentum</span></div>
         {tickers.map((ticker) => {
+          const quote = quoteAssetFromSymbol(ticker.symbol);
           const item = momentum(ticker.change24hPercent);
           const isSelected = ticker.symbol === selected;
           const selectedSignal = isSelected && forecast ? forecast.direction : item.label;
           return <button key={ticker.symbol} className={`tape-row ${isSelected ? "selected" : ""}`} role="row" onClick={() => onSelect(ticker.symbol as BinanceSymbol)}>
-            <strong>{displaySymbol(ticker.symbol)}</strong><span>{ticker.price ? formatPrice(ticker.price) : "Loading..."}</span><span className={ticker.change24hPercent >= 0 ? "positive" : "negative"}>{formatPercent(ticker.change24hPercent)}</span><span>{ticker.quoteVolume24h ? `$${(ticker.quoteVolume24h / 1_000_000).toFixed(1)}M` : "-"}</span><span className={isSelected && forecast ? forecast.direction.toLowerCase() : item.tone}><item.icon />{selectedSignal}</span>
+            <strong>{displaySymbol(ticker.symbol)}</strong><span>{ticker.price ? formatPrice(ticker.price) : "Loading..."}</span><span className={ticker.change24hPercent >= 0 ? "positive" : "negative"}>{formatPercent(ticker.change24hPercent)}</span><span>{ticker.quoteVolume24h ? formatQuoteCurrency(ticker.quoteVolume24h, quote) : "-"}</span><span className={isSelected && forecast ? forecast.direction.toLowerCase() : item.tone}><item.icon />{selectedSignal}</span>
           </button>;
         })}
       </div>

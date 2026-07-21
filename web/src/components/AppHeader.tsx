@@ -1,6 +1,5 @@
 import { Download, UserRound } from "lucide-react";
-import type { BinanceSymbol } from "../lib/binance";
-import { BINANCE_SYMBOLS, SYMBOL_LABELS } from "../lib/binance";
+import { BINANCE_BASE_ASSETS, type BinanceBaseAsset, type BinanceQuoteAsset } from "../lib/binance";
 import type { LiveConnectionStatus } from "../types";
 
 export type AppTab = "overview" | "spot" | "futures" | "decision" | "backtest" | "account";
@@ -24,8 +23,11 @@ function connectionLabel(status: LiveConnectionStatus, ageSeconds: number): stri
 interface AppHeaderProps {
   activeTab: AppTab;
   onTab: (tab: AppTab) => void;
-  symbol: BinanceSymbol;
-  onSymbol: (symbol: BinanceSymbol) => void;
+  baseAsset: BinanceBaseAsset;
+  quoteAsset: BinanceQuoteAsset;
+  quoteOptions: readonly BinanceQuoteAsset[];
+  onBaseAsset: (base: BinanceBaseAsset) => void;
+  onQuoteAsset: (quote: BinanceQuoteAsset) => void;
   status: LiveConnectionStatus;
   ageSeconds: number;
   onInstall: () => void;
@@ -35,7 +37,7 @@ interface AppHeaderProps {
   avatarUrl?: string | null;
 }
 
-export function AppHeader({ activeTab, onTab, symbol, onSymbol, status, ageSeconds, onInstall, installed, onAccount, accountLabel, avatarUrl }: AppHeaderProps) {
+export function AppHeader({ activeTab, onTab, baseAsset, quoteAsset, quoteOptions, onBaseAsset, onQuoteAsset, status, ageSeconds, onInstall, installed, onAccount, accountLabel, avatarUrl }: AppHeaderProps) {
   const live = status === "live" && ageSeconds <= 10;
   return (
     <header className="app-header">
@@ -44,7 +46,11 @@ export function AppHeader({ activeTab, onTab, symbol, onSymbol, status, ageSecon
         {tabs.map((tab) => <button key={tab.id} className={activeTab === tab.id ? "active" : ""} onClick={() => onTab(tab.id)}>{tab.label}</button>)}
       </nav>
       <div className="header-tools">
-        <label className="market-select"><span className="sr-only">Market</span><select value={symbol} onChange={(event) => onSymbol(event.target.value as BinanceSymbol)}>{BINANCE_SYMBOLS.map((item) => <option key={item} value={item}>{SYMBOL_LABELS[item]}</option>)}</select></label>
+        <div className="market-selectors" aria-label="Market pair">
+          <label className="market-select base-select"><span className="sr-only">Coin</span><select aria-label="Coin" value={baseAsset} onChange={(event) => onBaseAsset(event.target.value as BinanceBaseAsset)}>{BINANCE_BASE_ASSETS.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+          <span aria-hidden="true">/</span>
+          <label className="market-select quote-select"><span className="sr-only">Quote currency</span><select aria-label="Quote currency" value={quoteAsset} onChange={(event) => onQuoteAsset(event.target.value as BinanceQuoteAsset)}>{quoteOptions.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+        </div>
         <div className={`live-status ${live ? "is-live" : "is-delayed"}`} title="Public Binance WebSocket market data">
           <i aria-hidden="true" /><strong>{connectionLabel(status, ageSeconds)}</strong><span>{ageSeconds < 60 ? `Updated ${ageSeconds}s ago` : "Waiting for data"}</span>
         </div>
