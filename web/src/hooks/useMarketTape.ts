@@ -1,25 +1,30 @@
 import { useEffect, useRef, useState } from "react";
-import { BINANCE_SYMBOLS, emptyTicker, fetchBinanceTicker, tapeStreamUrl, type BinanceSymbol } from "../lib/binance";
+import { emptyTicker, fetchBinanceTicker, symbolsForQuote, tapeStreamUrl, type BinanceQuoteAsset, type BinanceSymbol } from "../lib/binance";
 import type { LiveTicker } from "../types";
 
 type TickerMap = Record<BinanceSymbol, LiveTicker>;
 
-function initialTickers(): TickerMap {
-  return Object.fromEntries(BINANCE_SYMBOLS.map((symbol) => [symbol, emptyTicker(symbol)])) as TickerMap;
+function initialTickers(quote: BinanceQuoteAsset): TickerMap {
+  return Object.fromEntries(symbolsForQuote(quote).map((symbol) => [symbol, emptyTicker(symbol)])) as TickerMap;
 }
 
-export function useMarketTape() {
-  const [tickers, setTickers] = useState<TickerMap>(initialTickers);
-  const pending = useRef<TickerMap>(initialTickers());
+export function useMarketTape(quote: BinanceQuoteAsset, enabled = true) {
+  const [tickers, setTickers] = useState<TickerMap>(() => initialTickers(quote));
+  const pending = useRef<TickerMap>(initialTickers(quote));
   const dirty = useRef(false);
 
   useEffect(() => {
+    const symbols = symbolsForQuote(quote);
+    const initial = initialTickers(quote);
+    pending.current = initial;
+    setTickers(initial);
+    if (!enabled) return undefined;
     let active = true;
     let socket: WebSocket | undefined;
     let reconnectTimer = 0;
     const abortController = new AbortController();
 
-    Promise.all(BINANCE_SYMBOLS.map((symbol) => fetchBinanceTicker(symbol, abortController.signal)))
+    Promise.all(symbols.map((symbol) => fetchBinanceTicker(symbol, abortController.signal)))
       .then((rows) => {
         if (!active) return;
         pending.current = Object.fromEntries(rows.map((ticker) => [ticker.symbol, ticker])) as TickerMap;
@@ -29,14 +34,14 @@ export function useMarketTape() {
 
     const connect = () => {
       if (!active || !navigator.onLine) return;
-      socket = new WebSocket(tapeStreamUrl());
+      socket = new WebSocket(tapeStreamUrl(quote));
       socket.onmessage = (event) => {
         try {
           const message = JSON.parse(String(event.data)) as { data?: Record<string, unknown> };
           const data = message.data;
           if (!data) return;
           const symbol = data?.s as BinanceSymbol | undefined;
-          if (!symbol || !BINANCE_SYMBOLS.includes(symbol)) return;
+          if (!symbol || !symbols.includes(symbol)) return;
           const previous = pending.current[symbol];
           pending.current = {
             ...pending.current,
@@ -79,7 +84,7 @@ export function useMarketTape() {
         socket.close();
       }
     };
-  }, []);
+  }, [enabled, quote]);
 
-  return BINANCE_SYMBOLS.map((symbol) => tickers[symbol]);
+  return symbolsForQuote(quote).map((symbol) => tickers[symbol] ?? emptyTicker(symbol));
 }

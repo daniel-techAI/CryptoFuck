@@ -1,6 +1,6 @@
 # NOCTURNE
 
-A live Binance Spot and USDⓈ-M Futures market terminal with exchange-style paper trading, transparent decision plans, cost-aware walk-forward validation, and hard risk gates.
+A live Binance market terminal with EUR-first Spot charts, stablecoin Futures, paper trading, and validation-gated decision plans.
 
 [Launch the free live web app](https://daniel-techai.github.io/CryptoFuck/) - [Download the latest app package](https://github.com/daniel-techAI/CryptoFuck/actions/workflows/app-package.yml) - [Set up Google/email profiles](docs/auth-and-deployment.md)
 
@@ -15,7 +15,8 @@ A live Binance Spot and USDⓈ-M Futures market terminal with exchange-style pap
 - live top-20 order books and recent-trade tapes, rendered on a separate half-second UI cadence;
 - selectable `1m`, `3m`, `15m`, `30m`, and `1h` candles;
 - a real interactive candlestick chart with volume, EMA 20, EMA 50, targets, and invalidation;
-- BTC/USDT, ETH/USDT, SOL/USDT, BNB/USDT, and XRP/USDT live market tape;
+- BTC, ETH, SOL, BNB, and XRP Spot markets quoted in EUR by default, with USDT and USDC switches;
+- USDⓈ-M Futures quoted in USDT or USDC, matching the contracts Binance actually lists;
 - explicit bullish, bearish, or neutral forecasts with probability distribution and indicator evidence;
 - a hard neutral gate when walk-forward directional accuracy is weak;
 - 15-minute and 1-hour context confirmation that lowers confidence on conflicts;

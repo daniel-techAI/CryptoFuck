@@ -456,8 +456,11 @@ body { background: var(--page); }
 .top-tabs button.active { color: var(--accent); }
 .top-tabs button.active::after { background: var(--accent); }
 .header-tools { display: flex; align-items: center; min-width: 0; }
-.market-select { height: 100%; display: flex; align-items: center; border-left: 1px solid var(--border); }
-.market-select select { height: 36px; margin: 0 13px; padding: 0 34px 0 12px; border: 1px solid #39505f; border-radius: 2px; background: var(--page); color: var(--text); font-size: 10px; cursor: pointer; }
+.market-selectors { height: 100%; display: flex; align-items: center; gap: 5px; padding: 0 11px; border-left: 1px solid var(--border); color: var(--muted); font-size: 10px; }
+.market-select { height: 100%; display: flex; align-items: center; }
+.market-select select { height: 36px; padding: 0 30px 0 10px; border: 1px solid #39505f; border-radius: 2px; background: var(--page); color: var(--text); font-size: 10px; cursor: pointer; }
+.base-select select { width: 82px; }
+.quote-select select { width: 88px; }
 .live-status { min-width: 232px; height: 100%; display: grid; grid-template-columns: 10px auto; align-content: center; gap: 2px 8px; padding: 0 16px; border-left: 1px solid var(--border); }
 .live-status i { width: 8px; height: 8px; grid-row: span 2; align-self: center; border-radius: 50%; background: var(--warning); }
 .live-status strong { color: var(--warning); font-size: 9px; letter-spacing: .08em; }
@@ -684,7 +687,7 @@ body { background: var(--page); }
   .top-tabs { height: 58px; padding-left: 4px; overflow-x: auto; overflow-y: hidden; }
   .top-tabs button { min-width: 74px; }
   .header-tools { grid-column: 1 / -1; min-height: 54px; border-top: 1px solid var(--border); }
-  .market-select { border-left: 0; }
+  .market-selectors { border-left: 0; }
   .live-status { margin-left: auto; }
   .market-command-grid { grid-template-columns: 1fr; }
   .chart-panel { border-right: 0; }
@@ -700,7 +703,10 @@ body { background: var(--page); }
 @media (max-width: 620px) {
   .brand { min-width: 118px; padding: 0 12px; font-size: 23px; }
   .top-tabs button { min-width: 67px; font-size: 9px; }
-  .market-select select { width: 126px; margin-inline: 8px; font-size: 8px; }
+  .market-selectors { gap: 3px; padding-inline: 7px; }
+  .market-select select { padding-inline: 7px 22px; font-size: 8px; }
+  .base-select select { width: 66px; }
+  .quote-select select { width: 72px; }
   .live-status { min-width: 112px; padding-inline: 8px; }
   .live-status strong { font-size: 7px; }
   .profile-action { width: 44px; }

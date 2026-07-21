@@ -1,8 +1,8 @@
 import { Check, Copy, ExternalLink, ShieldAlert } from "lucide-react";
 import { useMemo, useState } from "react";
-import { BINANCE_INTERVALS, displaySymbol, type BinanceSymbol } from "../lib/binance";
+import { BINANCE_INTERVALS, displaySymbol, quoteAssetFromSymbol, type BinanceSymbol } from "../lib/binance";
 import { buildTradeDecision } from "../lib/decision";
-import { formatCompactUsd, formatPercent, formatPrice } from "../lib/format";
+import { formatCompactUsd, formatPercent, formatPrice, formatQuoteCurrency } from "../lib/format";
 import type {
   BinanceInterval,
   Candle,
@@ -27,7 +27,7 @@ interface DecisionTabProps {
   microstructure: MarketMicrostructure;
   sentiment: MarketSentiment | null;
   sentimentError: string;
-  futures: FuturesMarketContext;
+  futures?: FuturesMarketContext;
   portfolio: PortfolioSummary;
   status: LiveConnectionStatus;
   ageSeconds: number;
@@ -74,6 +74,7 @@ export function DecisionTab(props: DecisionTabProps) {
     positionSide,
   }), [props.forecast, props.ticker, props.interval, props.status, props.ageSeconds, props.microstructure, props.portfolio, positionSide]);
   const forecast = props.forecast;
+  const quote = quoteAssetFromSymbol(props.symbol);
   const actionClass = decisionClass(decision.action);
   const spreadBps = props.ticker.bid && props.ticker.ask && props.ticker.price ? (props.ticker.ask - props.ticker.bid) / props.ticker.price * 10_000 : 0;
 
@@ -111,9 +112,9 @@ export function DecisionTab(props: DecisionTabProps) {
 
   const facts = [
     `${displaySymbol(props.symbol)} trades at ${props.ticker.price ? formatPrice(props.ticker.price) : "-"} (${formatPercent(props.ticker.change24hPercent)} / 24h).`,
-    `24h range ${formatPrice(props.ticker.low24h)}–${formatPrice(props.ticker.high24h)}; quote volume ${formatCompactUsd(props.ticker.quoteVolume24h)}.`,
+    `24h range ${formatPrice(props.ticker.low24h)}–${formatPrice(props.ticker.high24h)}; quote volume ${formatQuoteCurrency(props.ticker.quoteVolume24h, quote)}.`,
     `Spread ${spreadBps.toFixed(2)} bps; top-20 book imbalance ${props.microstructure.imbalancePercent >= 0 ? "+" : ""}${props.microstructure.imbalancePercent.toFixed(1)}% bid-side.`,
-    props.futures.markPrice ? `Perpetual mark ${formatPrice(props.futures.markPrice)}; latest funding ${(props.futures.fundingRate * 100).toFixed(4)}%.` : "Binance Futures funding context is unavailable in this region/session.",
+    props.futures?.markPrice ? `Perpetual mark ${formatPrice(props.futures.markPrice)}; latest funding ${(props.futures.fundingRate * 100).toFixed(4)}%.` : "Perpetual funding is not mixed into this Spot-market decision.",
     props.sentiment ? `Fear & Greed ${props.sentiment.value} — ${props.sentiment.classification}; context only, not used in the signal.` : `Fear & Greed unavailable${props.sentimentError ? `: ${props.sentimentError}` : "."}`,
   ];
 

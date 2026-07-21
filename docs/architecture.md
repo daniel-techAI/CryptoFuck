@@ -22,9 +22,9 @@ flowchart LR
 
 ## Live market boundary
 
-The static Pages app requests up to 360 historical candles from Binance's public Spot or USDⓈ-M Futures market-data endpoint. It opens one combined stream for the selected venue's kline, 24-hour ticker, and best bid/ask. Spot and Futures workspaces also open independent venue-matched top-20 depth and recent-trade streams, so one reconnect does not interrupt both panels. The Markets tab retains a separate combined Spot mini-ticker stream for its five-row tape.
+The static Pages app requests up to 360 historical candles from Binance's public Spot or USDⓈ-M Futures market-data endpoint. Spot, Markets, Decision and Backtest default to EUR and can switch to USDT or USDC. Futures uses a separate USDT/USDC preference because Binance does not list EUR perpetual contracts. The app opens one combined stream for the selected venue's kline, 24-hour ticker, and best bid/ask. Spot and Futures workspaces also open independent venue-matched top-20 depth and recent-trade streams, so one reconnect does not interrupt both panels. The Markets tab retains a separate combined Spot mini-ticker stream for its five-row tape.
 
-Binance pushes non-1s kline updates approximately every two seconds. Kline/ticker frames update refs without forcing React to render for every event; the visible market UI flushes every three seconds. Depth and aggregate trades use a separate 500ms render cadence and only connect while Spot, Futures, or Decision is open. The header reports event age, reconnects with exponential backoff, and switches to an offline or reconnecting state rather than labeling old data live.
+Binance pushes non-1s kline updates approximately every two seconds. Kline/ticker frames update refs without forcing React to render for every event; the visible market UI flushes every three seconds. Depth and recent trades use a separate 500ms render cadence and only connect while Spot, Futures, or Decision is open. The header reports event age, reconnects with exponential backoff, and switches to an offline or reconnecting state rather than labeling old data live.
 
 ## Decision boundary
 
