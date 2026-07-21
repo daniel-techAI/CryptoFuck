@@ -5,11 +5,15 @@ import { AccountDialog } from "./components/AccountDialog";
 import { AccountTab } from "./components/AccountTab";
 import { AppHeader, type AppTab } from "./components/AppHeader";
 import { BacktestTab } from "./components/BacktestTab";
+import { DecisionTab } from "./components/DecisionTab";
 import { InstallDialog } from "./components/InstallDialog";
 import { OverviewTab } from "./components/OverviewTab";
 import { TradingSimulator } from "./components/TradingSimulator";
 import { useBinanceMarket } from "./hooks/useBinanceMarket";
+import { useFuturesMarketContext } from "./hooks/useFuturesMarketContext";
 import { useInstallApp } from "./hooks/useInstallApp";
+import { useMarketMicrostructure } from "./hooks/useMarketMicrostructure";
+import { useMarketSentiment } from "./hooks/useMarketSentiment";
 import { useMarketTape } from "./hooks/useMarketTape";
 import { useTimeframeContext } from "./hooks/useTimeframeContext";
 import { loadPaperOrders, loadPortfolio, placePaperOrder, setKillSwitch } from "./lib/api";
@@ -32,7 +36,7 @@ const emptyPortfolio: PortfolioSummary = {
   maxDailyDrawdownPercent: 3,
 };
 
-const validTabs = new Set<AppTab>(["overview", "spot", "futures", "backtest", "account"]);
+const validTabs = new Set<AppTab>(["overview", "spot", "futures", "decision", "backtest", "account"]);
 
 function initialTab(): AppTab {
   const hash = window.location.hash.slice(1) as AppTab;
@@ -52,9 +56,14 @@ function App() {
   const [installOpen, setInstallOpen] = useState(false);
   const [clock, setClock] = useState(Date.now());
   const [notice, setNotice] = useState<{ kind: "success" | "error"; message: string }>();
-  const market = useBinanceMarket(symbol, interval);
+  const marketVenue = activeTab === "futures" ? "futures" : "spot";
+  const market = useBinanceMarket(symbol, interval, marketVenue);
+  const needsMicrostructure = activeTab === "spot" || activeTab === "futures" || activeTab === "decision";
+  const microstructure = useMarketMicrostructure(symbol, needsMicrostructure, marketVenue);
+  const futures = useFuturesMarketContext(symbol);
+  const { sentiment, error: sentimentError } = useMarketSentiment();
   const tape = useMarketTape();
-  const timeframeContext = useTimeframeContext(symbol);
+  const timeframeContext = useTimeframeContext(symbol, marketVenue);
   const forecast = useMemo(() => applyTimeframeContext(buildForecast(market.candles), timeframeContext), [market.candles, timeframeContext]);
   const ageSeconds = market.lastUpdate ? Math.max(0, Math.floor((clock - market.lastUpdate) / 1_000)) : 99;
 
@@ -123,8 +132,9 @@ function App() {
       <AppHeader activeTab={activeTab} onTab={changeTab} symbol={symbol} onSymbol={setSymbol} status={market.status} ageSeconds={ageSeconds} onInstall={() => void openInstall()} installed={installApp.installed} onAccount={() => setAccountOpen(true)} accountLabel={accountLabel} avatarUrl={profile?.avatarUrl} />
       {notice ? <div className={`global-notice ${notice.kind}`} role="status">{notice.kind === "success" ? <CheckCircle2 /> : <AlertCircle />}<span>{notice.message}</span><button onClick={() => setNotice(undefined)} aria-label="Dismiss"><X /></button></div> : null}
       {activeTab === "overview" ? <OverviewTab symbol={symbol} onSymbol={setSymbol} interval={interval} onInterval={setInterval} candles={market.candles} ticker={market.ticker} tickers={tape} forecast={forecast} status={market.status} error={market.error} /> : null}
-      {activeTab === "spot" ? <TradingSimulator mode="spot" symbol={symbol} ticker={market.ticker} forecast={forecast} portfolio={portfolio} orders={orders} submitting={submitting} onSubmit={submitPaperTrade} onKillSwitch={toggleKillSwitch} /> : null}
-      {activeTab === "futures" ? <TradingSimulator mode="futures" symbol={symbol} ticker={market.ticker} forecast={forecast} portfolio={portfolio} orders={orders} submitting={submitting} onSubmit={submitPaperTrade} onKillSwitch={toggleKillSwitch} /> : null}
+      {activeTab === "spot" ? <TradingSimulator mode="spot" symbol={symbol} ticker={market.ticker} candles={market.candles} interval={interval} onInterval={setInterval} forecast={forecast} microstructure={microstructure} futures={futures} portfolio={portfolio} orders={orders} submitting={submitting} onSubmit={submitPaperTrade} onKillSwitch={toggleKillSwitch} /> : null}
+      {activeTab === "futures" ? <TradingSimulator mode="futures" symbol={symbol} ticker={market.ticker} candles={market.candles} interval={interval} onInterval={setInterval} forecast={forecast} microstructure={microstructure} futures={futures} portfolio={portfolio} orders={orders} submitting={submitting} onSubmit={submitPaperTrade} onKillSwitch={toggleKillSwitch} /> : null}
+      {activeTab === "decision" ? <DecisionTab symbol={symbol} interval={interval} onInterval={setInterval} candles={market.candles} ticker={market.ticker} forecast={forecast} microstructure={microstructure} sentiment={sentiment} sentimentError={sentimentError} futures={futures} portfolio={portfolio} status={market.status} ageSeconds={ageSeconds} onKillSwitch={toggleKillSwitch} /> : null}
       {activeTab === "backtest" ? <BacktestTab symbol={symbol} interval={interval} candles={market.candles} forecast={forecast} /> : null}
       {activeTab === "account" ? <AccountTab user={user} profile={profile} configured={configured} installed={installApp.installed} onAccount={() => setAccountOpen(true)} onInstall={() => void openInstall()} /> : null}
       {accountOpen ? <AccountDialog onClose={() => setAccountOpen(false)} /> : null}

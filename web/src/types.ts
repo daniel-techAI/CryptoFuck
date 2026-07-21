@@ -25,6 +25,49 @@ export interface LiveTicker {
   eventTime: number;
 }
 
+export interface OrderBookLevel {
+  price: number;
+  quantity: number;
+  total: number;
+}
+
+export interface RecentTrade {
+  id: number;
+  price: number;
+  quantity: number;
+  quoteValue: number;
+  timestamp: number;
+  side: "BUY" | "SELL";
+}
+
+export interface MarketMicrostructure {
+  bids: OrderBookLevel[];
+  asks: OrderBookLevel[];
+  trades: RecentTrade[];
+  bidDepth: number;
+  askDepth: number;
+  imbalancePercent: number;
+  lastUpdate: number;
+  status: LiveConnectionStatus;
+}
+
+export interface MarketSentiment {
+  value: number;
+  classification: string;
+  timestamp: number;
+  nextUpdateSeconds: number;
+  sourceUrl: string;
+}
+
+export interface FuturesMarketContext {
+  markPrice: number;
+  indexPrice: number;
+  fundingRate: number;
+  nextFundingTime: number;
+  lastUpdate: number;
+  error: string;
+}
+
 export interface ForecastEvidence {
   label: string;
   value: string;
@@ -69,6 +112,29 @@ export interface MarketForecast {
   context: Array<{ interval: BinanceInterval; direction: "BULLISH" | "BEARISH" | "NEUTRAL"; score: number }>;
   contextConsensus: "ALIGNED" | "MIXED" | "CONFLICT" | "UNAVAILABLE";
   evaluatedAt: number;
+}
+
+export type TradeDecisionAction = "WAIT" | "CONSIDER LONG" | "CONSIDER SHORT" | "MANAGE" | "REDUCE" | "EXIT";
+
+export interface TradeDecisionReason {
+  label: string;
+  value: string;
+  tone: "positive" | "negative" | "caution" | "neutral";
+  passes: boolean;
+}
+
+export interface TradeDecision {
+  action: TradeDecisionAction;
+  confidence: "HIGH" | "MEDIUM" | "LOW";
+  headline: string;
+  currentStep: 1 | 2 | 3 | 4 | 5;
+  autoBlocked: boolean;
+  entryCondition: string;
+  riskRewardTarget1: number;
+  riskRewardTarget2: number;
+  suggestedRiskPercent: number;
+  suggestedPositionUsd: number;
+  reasons: TradeDecisionReason[];
 }
 
 export interface MarketSignal {

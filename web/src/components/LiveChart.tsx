@@ -31,7 +31,7 @@ function chartTime(timestamp: number): UTCTimestamp {
   return Math.floor(timestamp / 1000) as UTCTimestamp;
 }
 
-export function LiveChart({ candles, forecast }: { candles: Candle[]; forecast: MarketForecast | null }) {
+export function LiveChart({ candles, forecast, planMode = false }: { candles: Candle[]; forecast: MarketForecast | null; planMode?: boolean }) {
   const container = useRef<HTMLDivElement>(null);
   const chartRefs = useRef<ChartRefs | null>(null);
   const data = useMemo(() => {
@@ -90,11 +90,23 @@ export function LiveChart({ candles, forecast }: { candles: Candle[]; forecast: 
     refs.lines = [];
     if (!forecast) return;
     const neutral = forecast.direction === "NEUTRAL";
-    refs.lines = [
+    const coreLines = [
       refs.candles.createPriceLine({ price: forecast.levels.target1, color: "rgba(164, 231, 54, .72)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: neutral ? "UP" : "T1" }),
       refs.candles.createPriceLine({ price: forecast.levels.invalidation, color: "rgba(255, 88, 80, .82)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: neutral ? "DOWN" : "STOP" }),
     ];
-  }, [forecast]);
+    if (!planMode) {
+      refs.lines = coreLines;
+      return;
+    }
+    const side = forecast.direction === "BEARISH" ? -1 : 1;
+    const entry = (forecast.levels.entryLow + forecast.levels.entryHigh) / 2;
+    refs.lines = [
+      ...coreLines,
+      refs.candles.createPriceLine({ price: entry, color: "rgba(69, 215, 230, .88)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: "ENTRY" }),
+      refs.candles.createPriceLine({ price: forecast.levels.target2, color: "rgba(164, 231, 54, .82)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: "T2" }),
+      refs.candles.createPriceLine({ price: forecast.levels.target2 + side * forecast.indicators.atr14, color: "rgba(240, 185, 37, .76)", lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: true, title: "STRETCH" }),
+    ];
+  }, [forecast, planMode]);
 
   return <div ref={container} className="live-chart-canvas" role="img" aria-label="Live Binance candlestick chart with volume and moving averages" />;
 }

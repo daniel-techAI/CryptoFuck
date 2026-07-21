@@ -8,6 +8,22 @@
 4. Start in an exchange sandbox. Production requires the additional `LIVE_PRODUCTION_ACK` value documented in `.env.example`.
 5. Treat every signal as research. Stop trading when data is stale, the regime changes, slippage exceeds assumptions, or the daily drawdown lock triggers.
 6. Never place a Supabase service-role key, Google OAuth secret, exchange credential, or trading-arm token in a Vite variable or GitHub Pages build.
+7. Do not treat a `CONSIDER LONG` or `CONSIDER SHORT` result as an order. Confirm the live venue, instrument, account fees, region, position mode and actual Binance order ticket independently.
+8. Keep market-news and community-post influence disabled until a versioned dataset proves it improves out-of-sample, cost-adjusted results without leakage.
+
+## Decision kill-switch conditions
+
+The public app automatically blocks new directional plans when any of these conditions is true:
+
+- the selected Binance feed is not live or is more than ten seconds old;
+- walk-forward sample size is below 20, directional accuracy is below 50%, or net-positive-after-costs rate is below 25%;
+- 15-minute and one-hour context conflicts with the active direction;
+- bid/ask spread exceeds eight basis points;
+- the forecast is neutral;
+- Target 1 reward-to-risk after modeled costs is below 1.2R;
+- the manual paper-account kill switch is engaged.
+
+These thresholds reduce overtrading; they do not prove a profitable edge. Order-book depth can be spoofed, funding is not directional proof, and the Fear & Greed index is broad Bitcoin-market context rather than pair-specific evidence.
 
 ## Promotion checklist
 

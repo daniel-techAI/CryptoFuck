@@ -1,30 +1,36 @@
 # NOCTURNE
 
-A live Binance crypto market terminal with candlestick charts, transparent forecasts, cost-aware walk-forward validation, and risk-limited paper trading.
+A live Binance Spot and USDⓈ-M Futures market terminal with exchange-style paper trading, transparent decision plans, cost-aware walk-forward validation, and hard risk gates.
 
 [Launch the free live web app](https://daniel-techai.github.io/CryptoFuck/) - [Download the latest app package](https://github.com/daniel-techAI/CryptoFuck/actions/workflows/app-package.yml) - [Set up Google/email profiles](docs/auth-and-deployment.md)
 
 > Research and simulation only. Forecasts are probabilistic rule-based estimates, not guarantees or financial advice. Crypto can lose substantial value.
 
-![NOCTURNE live dashboard concept](.design/nocturne-live-dashboard-concept.png)
+![NOCTURNE exchange workspace concept](.design/nocturne-exchange-workspace-concept-v2.png)
 
 ## Live web experience
 
-- Binance Spot REST history plus reconnecting WebSocket market streams;
+- Binance Spot and USDⓈ-M Futures REST history plus reconnecting WebSocket market streams;
 - a three-second UI refresh cadence with a visible event-age and connection indicator;
+- live top-20 order books and recent-trade tapes, rendered on a separate half-second UI cadence;
 - selectable `1m`, `3m`, `15m`, `30m`, and `1h` candles;
 - a real interactive candlestick chart with volume, EMA 20, EMA 50, targets, and invalidation;
 - BTC/USDT, ETH/USDT, SOL/USDT, BNB/USDT, and XRP/USDT live market tape;
 - explicit bullish, bearish, or neutral forecasts with probability distribution and indicator evidence;
 - a hard neutral gate when walk-forward directional accuracy is weak;
 - 15-minute and 1-hour context confirmation that lowers confidence on conflicts;
-- separate Overview, Spot, Futures, Backtest, and Account workspaces;
-- paper Spot and Futures order forms with estimated fees, slippage, risk, and liquidation;
+- separate Markets, Spot, Futures, Decision, Backtest, and Account workspaces;
+- exchange-style Spot and Futures paper workspaces with chart, depth, recent trades, order entry, costs, positions, and order history;
+- a dedicated Decision plan for `WAIT`, `CONSIDER LONG`, `CONSIDER SHORT`, `MANAGE`, `REDUCE`, or `EXIT`;
+- automatic entry blocking when data is stale, walk-forward validation is weak, higher timeframes conflict, spread is poor, or reward-to-risk after costs is insufficient;
+- entry conditions, invalidation, two targets, a clearly labeled stretch level that is not presented as a predicted maximum, and position-size reference;
+- factual market context from Binance plus the Alternative.me Fear & Greed index, with community/editorial/official source links and explicit provenance;
+- market-news and sentiment context excluded from the directional score until separately validated;
 - persistent browser-local paper positions, portfolio caps, and a kill switch;
 - installable PWA behavior with automatic code updates;
 - optional Google and email profiles through Supabase Auth.
 
-Binance documents the public [Kline WebSocket stream](https://developers.binance.com/docs/binance-spot-api-docs/web-socket-streams) and [historical kline endpoint](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints). No API key is needed for these public feeds.
+Binance documents its public [Spot streams](https://developers.binance.com/en/docs/products/spot/market-data/websocket-streams), [Spot REST market data](https://developers.binance.com/en/docs/products/spot/market-data/rest-api), and [USDⓈ-M Futures APIs](https://developers.binance.com/en/docs/products/derivatives-trading-usds-futures/Introduction). Alternative.me documents its [Fear & Greed API](https://alternative.me/crypto/fear-and-greed-index/). No API key is needed for these public feeds.
 
 ## Forecast and validation boundary
 
@@ -70,7 +76,7 @@ Market prices do not wait for GitHub Actions: each open app connects directly to
 
 ## Execution safety
 
-The public web app never sends exchange orders and never asks for exchange credentials. Paper limits include 1% maximum equity risk per trade, 3% total open risk, a 20% notional cap, and a kill switch.
+The public web app never sends exchange orders and never asks for exchange credentials. Decision actions are conditional research outputs, not instructions or guarantees. Paper limits include 1% maximum equity risk per trade, 3% total open risk, a 20% notional cap, a manual portfolio kill switch, and automatic entry blocking when reliability gates fail.
 
 The repository still contains a separately gated server-side CCXT adapter for private sandbox development. Never put exchange secrets into the frontend, GitHub Pages variables, or browser storage, and never grant withdrawal permission.
 

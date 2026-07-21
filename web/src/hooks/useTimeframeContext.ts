@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { fetchBinanceKlines, type BinanceSymbol } from "../lib/binance";
+import { fetchBinanceKlines, type BinanceSymbol, type MarketVenue } from "../lib/binance";
 import { buildForecast } from "../lib/forecast";
 import type { BinanceInterval, MarketForecast } from "../types";
 
 export type TimeframeContext = MarketForecast["context"];
 const CONTEXT_INTERVALS: BinanceInterval[] = ["15m", "1h"];
 
-export function useTimeframeContext(symbol: BinanceSymbol): TimeframeContext {
+export function useTimeframeContext(symbol: BinanceSymbol, venue: MarketVenue = "spot"): TimeframeContext {
   const [context, setContext] = useState<TimeframeContext>([]);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export function useTimeframeContext(symbol: BinanceSymbol): TimeframeContext {
       controller = new AbortController();
       try {
         const results = await Promise.all(CONTEXT_INTERVALS.map(async (interval) => {
-          const candles = await fetchBinanceKlines(symbol, interval, controller.signal);
+          const candles = await fetchBinanceKlines(symbol, interval, controller.signal, venue);
           const forecast = buildForecast(candles);
           return forecast ? { interval, direction: forecast.direction, score: forecast.score } : null;
         }));
@@ -33,7 +33,7 @@ export function useTimeframeContext(symbol: BinanceSymbol): TimeframeContext {
       controller.abort();
       window.clearInterval(timer);
     };
-  }, [symbol]);
+  }, [symbol, venue]);
 
   return context;
 }

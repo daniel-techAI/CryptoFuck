@@ -3,12 +3,13 @@ import type { BinanceSymbol } from "../lib/binance";
 import { BINANCE_SYMBOLS, SYMBOL_LABELS } from "../lib/binance";
 import type { LiveConnectionStatus } from "../types";
 
-export type AppTab = "overview" | "spot" | "futures" | "backtest" | "account";
+export type AppTab = "overview" | "spot" | "futures" | "decision" | "backtest" | "account";
 
 const tabs: Array<{ id: AppTab; label: string }> = [
-  { id: "overview", label: "Overview" },
+  { id: "overview", label: "Markets" },
   { id: "spot", label: "Spot" },
   { id: "futures", label: "Futures" },
+  { id: "decision", label: "Decision" },
   { id: "backtest", label: "Backtest" },
   { id: "account", label: "Account" },
 ];
