@@ -1,94 +1,73 @@
-# NOCTURNE dashboard design specification
+# NOCTURNE exchange and Decision design specification
 
-Source of truth: [dashboard concept](../.design/nocturne-dashboard-concept.png), generated at 1536 × 1044.
+Sources of truth:
+
+- [exchange workspace](../.design/nocturne-exchange-workspace-concept-v2.png), 1536 × 1024;
+- [Decision workspace](../.design/nocturne-decision-workspace-concept-v2.png), 1536 × 1024.
 
 ## Product surface
 
-NOCTURNE is a real operational dashboard, not a landing page. The primary desktop view contains:
+NOCTURNE is an original exchange-style research and paper-trading terminal. It does not reproduce Binance branding or send exchange orders.
 
-1. A slim navigation rail.
-2. A command header with paper-mode safety status, scan freshness, and a single `Run scan` action.
-3. A dominant selected-market chart.
-4. An adjacent explainable signal thesis.
-5. An open market-scanner table.
-6. A persistent portfolio-risk rail.
-7. A paper-trade ticket shown as an overlay after explicit user action.
-8. Compact secondary install and profile controls requested for the public app release.
-9. Account and install dialogs that reuse the ticket's strict bordered-surface language.
+The Spot and Futures workspaces contain a venue-matched top-20 order book, dominant live candlestick chart, aggregate-trade tape, compact order ticket with realistic modeled costs, and a paper positions/order-history ledger. The Futures workspace uses Binance USDⓈ-M Futures klines, ticker, depth and trades plus mark/funding context.
 
-On compact screens, navigation condenses, the thesis follows the chart, the table becomes a readable horizontal surface, and the risk rail stacks without hiding the kill switch.
+The Decision workspace contains a single action, conditional five-step plan, chart zones, entry condition, invalidation, two targets, non-maximum stretch reference, cost-adjusted reward/risk, position-size reference, manual/automatic kill-switch state, evidence ledger, factual context and provenance-labeled external sources.
 
-## Allowed first-viewport copy
+## First-viewport copy lock
 
 - NOCTURNE
-- Market command
-- Paper mode
-- All trades are simulated
-- Last scan
-- Run scan
-- Install
-- Sign in / Profile
-- Command
 - Markets
-- Strategies
-- Paper ledger
-- Automation
-- Signal thesis
-- Market scanner
-- Portfolio value
-- Daily P&L
-- Daily drawdown
-- Open risk
+- Spot
+- Futures
+- Decision
+- Backtest
+- Account
+- BTC / USDT
+- BINANCE LIVE
+- Install app
+- Order book
+- Recent trades
+- Order entry
+- Trade plan
+- WAIT / CONSIDER LONG / CONSIDER SHORT / MANAGE / REDUCE / EXIT
+- Evidence ledger
+- Market facts & sources
 - Kill switch
 
-Pair, price, signal, regime, confidence, target, entry, invalidation, and evidence values are dynamic product data rather than fixed concept copy.
+Prices, probabilities, reasons, targets, validation results, sentiment and venue labels are dynamic facts rather than fixed concept copy.
 
-## Design tokens
+## Design system
 
-| Role | Token |
+| Role | Value |
 | --- | --- |
-| Page | `#03111b` |
-| Raised surface | `#071a27` |
-| Secondary surface | `#0b2230` |
-| Border | `#24404e` |
-| Primary text | `#f2eee3` |
-| Muted text | `#8fa2ad` |
-| Accent | `#c8f31d` |
-| Secondary accent | `#43d7e7` |
-| Risk | `#ff5d52` |
-| Warning | `#f6a91b` |
+| Page | `#020810` |
+| Chart | `#030b13` |
+| Raised rail | `#061019` |
+| Border | `#1d303e` |
+| Primary text | `#edf1ed` |
+| Muted text | `#7f8e98` |
+| Buy / live | `#a4e736` |
+| Sell / risk | `#ff5850` |
+| Technical | `#45d7e6` |
+| Caution | `#f0b925` |
 
-Corners stay tight (`4–8px`), shadows are sparse, and borders—not card shadows—define hierarchy. The exact background is cool near-black navy; no cream shift, purple gradient, glass treatment, or decorative glow is allowed.
+Borders, rails, canvases and tables define hierarchy. Corners stay sharp at 0–4px. There are no decorative card grids, photos, hero copy, glass surfaces or unrelated gradients.
 
-## Typography
+Brand typography uses Instrument Serif. Every control, data row, chart label and numeric field uses IBM Plex Mono with explicit compact sizing and tabular alignment.
 
-- Content and numeric emphasis: `Instrument Serif`, Georgia fallback.
-- UI chrome, controls, labels, and tables: `IBM Plex Mono`, monospace fallback.
-- Controls use explicit 11–13px sizing, uppercase only for compact structural labels, and generous tracking.
-- The selected price is the strongest typographic object; scanner rows stay dense but readable.
+## Responsive behavior
 
-## Components and containers
+At desktop width, order book, chart, trades and ticket share one command-center row. Below 820px the chart leads, followed by the ticket, book and trades. Decision chart and plan stack. Dense tables and navigation retain internal horizontal scrolling while the root document stays viewport-width.
 
-- `AppShell`: fixed-width sidebar plus fluid command workspace.
-- `CommandHeader`: open band with one primary action.
-- `PriceChart`: bordered canvas with SVG line/area trace, zones, grid, axes, and scanning marker.
-- `SignalThesis`: bordered side rail with probability, regime, levels, and evidence.
-- `MarketScanner`: open table with selected-row state and Configure actions.
-- `RiskRail`: full-width segmented rail with kill-switch control.
-- `TradeTicket`: accessible modal/dialog, never visible until requested.
-- `AccountDialog`: centered on desktop and a bottom sheet on mobile; Google/email entry, private profile editing, and deletion controls.
-- `InstallDialog`: native PWA install action with platform guidance and Actions package fallback.
+## Core interactions
 
-## Icon inventory
+- switch between Markets, Spot, Futures, Decision, Backtest and Account;
+- switch venue-matched candle intervals (`1m`, `3m`, `15m`, `30m`, `1h`);
+- select paper long/short, market/limit, allocation, leverage, stop and target;
+- submit a risk-checked local paper order;
+- engage or release the manual paper kill switch;
+- inspect Decision reliability gates and manually declare position context;
+- copy a plan when the browser grants clipboard permission;
+- open provenance-labeled external sources in a separate tab.
 
-Use one thin-stroke rounded icon family for navigation, scan/play, settings, info, close, trend direction, and shield/kill-switch metaphors. Icons are 16–20px, optical stroke 1.75–2px, `currentColor`, and always paired with accessible labels where meaning is not obvious.
-
-## Motion
-
-- A slow, subtle vertical scan line traverses the chart only while scanning.
-- Safety and freshness indicators may pulse softly.
-- Modal and selected-row transitions are under 220ms and respect `prefers-reduced-motion`.
-
-## Core interaction path
-
-Run scan → receive live or cached market signals → select a market → inspect evidence and risk levels → configure a paper trade → validate risk sizing → submit to paper ledger → update portfolio/open-risk rail. The kill switch prevents new orders immediately.
+Community and editorial context never silently changes a signal. The visible `Market facts influence: OFF` state is part of the reliability design.

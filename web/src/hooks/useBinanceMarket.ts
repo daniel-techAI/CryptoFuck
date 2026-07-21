@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { emptyTicker, fetchBinanceKlines, fetchBinanceTicker, liveStreamUrl, type BinanceSymbol } from "../lib/binance";
+import { emptyTicker, fetchBinanceKlines, fetchBinanceTicker, liveStreamUrl, type BinanceSymbol, type MarketVenue } from "../lib/binance";
 import type { BinanceInterval, Candle, LiveConnectionStatus, LiveTicker } from "../types";
 
 interface CombinedMessage { stream?: string; data?: Record<string, unknown> }
@@ -29,7 +29,7 @@ function mergeCandle(candles: Candle[], candle: Candle): Candle[] {
   return copy;
 }
 
-export function useBinanceMarket(symbol: BinanceSymbol, interval: BinanceInterval) {
+export function useBinanceMarket(symbol: BinanceSymbol, interval: BinanceInterval, venue: MarketVenue = "spot") {
   const [candles, setCandles] = useState<Candle[]>([]);
   const [ticker, setTicker] = useState<LiveTicker>(() => emptyTicker(symbol));
   const [status, setStatus] = useState<LiveConnectionStatus>("connecting");
@@ -71,7 +71,7 @@ export function useBinanceMarket(symbol: BinanceSymbol, interval: BinanceInterva
         return;
       }
       setStatus(reconnectAttempt ? "reconnecting" : "connecting");
-      socket = new WebSocket(liveStreamUrl(symbol, interval));
+      socket = new WebSocket(liveStreamUrl(symbol, interval, venue));
       socket.onopen = () => {
         if (!active) return;
         reconnectAttempt = 0;
@@ -121,8 +121,8 @@ export function useBinanceMarket(symbol: BinanceSymbol, interval: BinanceInterva
     };
 
     Promise.all([
-      fetchBinanceKlines(symbol, interval, abortController.signal),
-      fetchBinanceTicker(symbol, abortController.signal),
+      fetchBinanceKlines(symbol, interval, abortController.signal, venue),
+      fetchBinanceTicker(symbol, abortController.signal, venue),
     ]).then(([initialCandles, initialTicker]) => {
       if (!active) return;
       pendingCandles.current = initialCandles;
@@ -163,7 +163,7 @@ export function useBinanceMarket(symbol: BinanceSymbol, interval: BinanceInterva
         socket.close();
       }
     };
-  }, [interval, symbol]);
+  }, [interval, symbol, venue]);
 
   return { candles, ticker, status, lastUpdate, error };
 }

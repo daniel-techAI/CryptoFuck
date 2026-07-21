@@ -2,6 +2,7 @@ import type { BinanceInterval, Candle, LiveTicker } from "../types";
 
 export const BINANCE_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"] as const;
 export type BinanceSymbol = (typeof BINANCE_SYMBOLS)[number];
+export type MarketVenue = "spot" | "futures";
 
 export const BINANCE_INTERVALS: BinanceInterval[] = ["1m", "3m", "15m", "30m", "1h"];
 
@@ -19,9 +20,15 @@ const REST_BASES = [
   "https://api-gcp.binance.com",
 ];
 
-async function publicFetch<T>(path: string, signal?: AbortSignal): Promise<T> {
+const FUTURES_REST_BASES = [
+  "https://fapi.binance.com",
+  "https://fapi1.binance.com",
+  "https://fapi2.binance.com",
+];
+
+async function publicFetch<T>(path: string, signal?: AbortSignal, venue: MarketVenue = "spot"): Promise<T> {
   let lastError: unknown;
-  for (const base of REST_BASES) {
+  for (const base of venue === "futures" ? FUTURES_REST_BASES : REST_BASES) {
     try {
       const response = await fetch(`${base}${path}`, { cache: "no-store", signal });
       if (!response.ok) throw new Error(`Binance returned ${response.status}`);
@@ -36,8 +43,9 @@ async function publicFetch<T>(path: string, signal?: AbortSignal): Promise<T> {
 
 type BinanceKline = [number, string, string, string, string, string, number, string, number, string, string, string];
 
-export async function fetchBinanceKlines(symbol: BinanceSymbol, interval: BinanceInterval, signal?: AbortSignal): Promise<Candle[]> {
-  const rows = await publicFetch<BinanceKline[]>(`/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=360`, signal);
+export async function fetchBinanceKlines(symbol: BinanceSymbol, interval: BinanceInterval, signal?: AbortSignal, venue: MarketVenue = "spot"): Promise<Candle[]> {
+  const path = venue === "futures" ? "/fapi/v1/klines" : "/api/v3/klines";
+  const rows = await publicFetch<BinanceKline[]>(`${path}?symbol=${symbol}&interval=${interval}&limit=360`, signal, venue);
   return rows.map((row) => ({
     timestamp: row[0],
     open: Number(row[1]),
@@ -61,10 +69,12 @@ interface BinanceTicker24h {
 
 interface BinanceBookTicker { bidPrice: string; askPrice: string }
 
-export async function fetchBinanceTicker(symbol: BinanceSymbol, signal?: AbortSignal): Promise<LiveTicker> {
+export async function fetchBinanceTicker(symbol: BinanceSymbol, signal?: AbortSignal, venue: MarketVenue = "spot"): Promise<LiveTicker> {
+  const tickerPath = venue === "futures" ? "/fapi/v1/ticker/24hr" : "/api/v3/ticker/24hr";
+  const bookPath = venue === "futures" ? "/fapi/v1/ticker/bookTicker" : "/api/v3/ticker/bookTicker";
   const [ticker, book] = await Promise.all([
-    publicFetch<BinanceTicker24h>(`/api/v3/ticker/24hr?symbol=${symbol}`, signal),
-    publicFetch<BinanceBookTicker>(`/api/v3/ticker/bookTicker?symbol=${symbol}`, signal),
+    publicFetch<BinanceTicker24h>(`${tickerPath}?symbol=${symbol}`, signal, venue),
+    publicFetch<BinanceBookTicker>(`${bookPath}?symbol=${symbol}`, signal, venue),
   ]);
   return {
     symbol,
@@ -80,14 +90,24 @@ export async function fetchBinanceTicker(symbol: BinanceSymbol, signal?: AbortSi
   };
 }
 
-export function liveStreamUrl(symbol: BinanceSymbol, interval: BinanceInterval): string {
+export function liveStreamUrl(symbol: BinanceSymbol, interval: BinanceInterval, venue: MarketVenue = "spot"): string {
   const pair = symbol.toLowerCase();
-  return `wss://stream.binance.com:443/stream?streams=${pair}@kline_${interval}/${pair}@ticker/${pair}@bookTicker`;
+  const host = venue === "futures" ? "wss://fstream.binance.com/stream" : "wss://stream.binance.com:443/stream";
+  return `${host}?streams=${pair}@kline_${interval}/${pair}@ticker/${pair}@bookTicker`;
 }
 
 export function tapeStreamUrl(): string {
   const streams = BINANCE_SYMBOLS.map((symbol) => `${symbol.toLowerCase()}@miniTicker`).join("/");
   return `wss://stream.binance.com:443/stream?streams=${streams}`;
+}
+
+export function microstructureStreamUrls(symbol: BinanceSymbol, venue: MarketVenue = "spot"): { depth: string; trades: string } {
+  const pair = symbol.toLowerCase();
+  const host = venue === "futures" ? "wss://fstream.binance.com/ws" : "wss://stream.binance.com:443/ws";
+  return {
+    depth: `${host}/${pair}@depth20@100ms`,
+    trades: `${host}/${pair}@${venue === "futures" ? "trade" : "aggTrade"}`,
+  };
 }
 
 export function emptyTicker(symbol: BinanceSymbol): LiveTicker {
