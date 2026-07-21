@@ -65,5 +65,5 @@ The Browser/IAB DOM snapshot endpoint was incompatible in this runtime, so the s
 - Server tests: 7 passed.
 - Web tests: 9 passed, including forecast direction, minimum history, EMA stability, and context-conflict confidence reduction.
 - TypeScript and production PWA builds: passed.
-- PWA precache: 25 entries, about 941 KiB.
+- PWA precache: 24 entries, about 817 KiB.
 - Dependency audit: 0 vulnerabilities at moderate or higher severity.
