@@ -40,6 +40,7 @@ Intentional extensions authorized by the reliability request and second improvem
 - Added a validation rejection gate and higher-timeframe context instead of overstating confidence.
 - Changed neutral price levels from `Entry / Stop / Target` language to `Observation / Downside trigger / Upside trigger`.
 - Removed the final focused-control outline before visual capture.
+- Added an automatic page reload when a newly deployed service worker takes control and removed the obsolete static snapshot from the PWA bundle.
 
 No fixable material visual mismatches remain. The live market state is an intentional data-driven deviation from the bullish mock concept.
 
